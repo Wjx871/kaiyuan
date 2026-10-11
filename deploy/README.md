@@ -71,7 +71,7 @@
 
 ```powershell
 cd C:\inetpub\carnival-sync
-.\install-task.ps1 -Repo "你的用户名/仓库名"
+.\install-task.ps1 -Repo "Wjx871/kaiyuan" -Branch "main" -SiteRoot "C:\inetpub\wwwroot"
 ```
 
 就这一条。它会：
@@ -80,6 +80,9 @@ cd C:\inetpub\carnival-sync
 2. 写入 `config.json`（仓库地址、分支、站点目录）
 3. 注册名为 **Carnival Sync** 的计划任务，**以 SYSTEM 身份、每 1 分钟运行一次**
 4. 立刻跑一次，并把日志尾巴打出来
+
+> 不传 `-Repo` 之外的参数时，默认 `-Branch main`、`-SiteRoot C:\inetpub\wwwroot`、
+> `-WorkDir` 取脚本自身所在目录。本项目的实际部署就是上面这条命令。
 
 卸载：
 
