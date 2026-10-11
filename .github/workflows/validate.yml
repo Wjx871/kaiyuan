@@ -1,0 +1,98 @@
+name: 检查配置
+
+# 同学改完 carnival.config.json 提 PR 时自动跑。
+# 目的：在合并之前拦住写坏的 JSON，避免整站出问题。
+# 同时这也是给同学看的一次「CI 是怎么工作的」现场演示。
+
+on:
+  pull_request:
+    paths:
+      - "carnival.config.json"
+  push:
+    branches: [main]
+    paths:
+      - "carnival.config.json"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: 校验 carnival.config.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 解析并检查字段
+        run: |
+          python3 - <<'PY'
+          import json, re, sys, pathlib
+
+          path = pathlib.Path("carnival.config.json")
+          raw = path.read_text(encoding="utf-8")
+
+          errors = []
+          warnings = []
+
+          # 1. 必须是合法 JSON
+          try:
+              cfg = json.loads(raw)
+          except json.JSONDecodeError as e:
+              print(f"::error file=carnival.config.json,line={e.lineno},col={e.colno}::"
+                    f"JSON 格式错误：{e.msg}")
+              print(f"\n❌ JSON 解析失败，第 {e.lineno} 行第 {e.colno} 列：{e.msg}")
+              print("\n常见原因：多了一个逗号、少了一个引号、或者用了中文引号（“”）。")
+              print("请确认所有引号都是英文的 \" 而不是中文的 “ ”。")
+              sys.exit(1)
+
+          if not isinstance(cfg, dict):
+              print("::error::carnival.config.json 的顶层必须是一个对象（用 { } 包起来）")
+              sys.exit(1)
+
+          # 2. 必填字段
+          required = {
+              "slogan":   30,
+              "subtitle": 40,
+          }
+          for key, limit in required.items():
+              if key not in cfg:
+                  errors.append(f"缺少必填字段 `{key}`")
+                  continue
+              val = cfg[key]
+              if not isinstance(val, str):
+                  errors.append(f"`{key}` 必须是字符串（要用英文引号包起来）")
+                  continue
+              if not val.strip():
+                  errors.append(f"`{key}` 不能是空的")
+                  continue
+              if len(val) > limit:
+                  errors.append(f"`{key}` 太长了，{len(val)} 字，上限 {limit} 字")
+
+          # 3. accent 颜色
+          if "accent" in cfg:
+              accent = cfg["accent"]
+              if not isinstance(accent, str) or not re.fullmatch(r"#[0-9a-fA-F]{3,8}", accent):
+                  errors.append("`accent` 必须是十六进制色值，例如 `#4099ff`")
+
+          # 4. 未知字段只警告
+          allowed = {"slogan", "subtitle", "accent"}
+          for key in cfg:
+              if key not in allowed:
+                  warnings.append(f"多了一个用不到的字段 `{key}`（不影响运行，但建议删掉）")
+
+          for w in warnings:
+              print(f"::warning file=carnival.config.json::{w}")
+              print(f"⚠️  {w}")
+
+          if errors:
+              for e in errors:
+                  print(f"::error file=carnival.config.json::{e}")
+                  print(f"❌ {e}")
+              print("\n请修正后重新提交，不用重新开 PR——直接改你分支上的这个文件就行。")
+              sys.exit(1)
+
+          print("✅ 配置检查通过")
+          print(f"   标语：{cfg.get('slogan')}")
+          print(f"   副标语：{cfg.get('subtitle')}")
+          print(f"   主题色：{cfg.get('accent')}")
+          PY

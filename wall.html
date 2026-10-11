@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>贡献者墙 · 开源软件社</title>
+<style>
+:root{
+  --bg:#0e1116; --panel:#161b22; --line:#232b36;
+  --ink:#e6edf3; --ink2:#8b949e; --ink3:#5c6773;
+  --accent:#58a6ff; --gold:#e3b341; --green:#3fb950;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--ink); min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+              "Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  padding:32px 28px 48px;
+  background-image:radial-gradient(circle at 15% 0%,#1b2430 0%,transparent 45%),
+                   radial-gradient(circle at 85% 100%,#1a2333 0%,transparent 45%);
+}
+
+header{text-align:center;margin-bottom:34px;}
+h1{font-size:30px;font-weight:600;letter-spacing:.02em;}
+h1 .dot{color:var(--accent);}
+.sub{margin-top:10px;color:var(--ink2);font-size:15px;letter-spacing:.06em;}
+
+.counter{
+  display:inline-flex;align-items:baseline;gap:9px;margin-top:20px;
+  padding:11px 26px;border-radius:999px;
+  background:var(--panel);border:1px solid var(--line);
+}
+.counter .n{font-size:32px;font-weight:600;color:var(--accent);line-height:1;}
+.counter .t{font-size:14px;color:var(--ink2);}
+
+.sec-title{
+  display:flex;align-items:center;gap:11px;
+  margin:40px 0 20px;font-size:15px;color:var(--ink2);font-weight:500;
+}
+.sec-title::after{content:"";flex:1;height:1px;background:var(--line);}
+
+.grid{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;}
+.person{
+  width:136px;padding:18px 10px 15px;border-radius:14px;
+  background:var(--panel);border:1px solid var(--line);
+  text-align:center;transition:border-color .25s,transform .25s;
+}
+.person:hover{border-color:var(--accent);transform:translateY(-3px);}
+.person img{
+  width:64px;height:64px;border-radius:50%;display:block;margin:0 auto 11px;
+  background:#22272e;border:2px solid var(--line);
+}
+.person .name{
+  font-size:13px;font-weight:500;word-break:break-all;line-height:1.4;
+}
+.person .cnt{font-size:11px;color:var(--ink3);margin-top:5px;}
+
+.person.new{border-color:var(--gold);animation:pop 2.4s ease-out;}
+.person.new img{border-color:var(--gold);}
+@keyframes pop{
+  0%{box-shadow:0 0 0 0 rgba(227,179,65,.55);transform:scale(1.06);}
+  70%{box-shadow:0 0 0 16px rgba(227,179,65,0);}
+  100%{box-shadow:0 0 0 0 rgba(227,179,65,0);transform:scale(1);}
+}
+.badge-new{
+  display:inline-block;margin-top:6px;font-size:10px;
+  color:#0e1116;background:var(--gold);border-radius:4px;padding:1px 6px;font-weight:600;
+}
+
+.msgs{display:flex;flex-direction:column;gap:11px;max-width:900px;margin:0 auto;}
+.msg{
+  display:flex;gap:14px;align-items:flex-start;
+  background:var(--panel);border:1px solid var(--line);
+  border-left:3px solid var(--green);
+  border-radius:10px;padding:15px 18px;
+}
+.msg img{width:38px;height:38px;border-radius:50%;flex:none;background:#22272e;}
+.msg .txt{font-size:15px;line-height:1.6;word-break:break-word;}
+.msg .who{font-size:12px;color:var(--ink3);margin-top:5px;}
+
+.empty{
+  text-align:center;color:var(--ink3);font-size:14px;
+  padding:44px 20px;border:1px dashed var(--line);border-radius:14px;
+}
+
+footer{
+  margin-top:52px;padding-top:22px;border-top:1px solid var(--line);
+  text-align:center;color:var(--ink3);font-size:12px;line-height:1.8;
+}
+footer a{color:var(--ink2);text-decoration:none;border-bottom:1px solid var(--line);}
+
+.status{
+  position:fixed;right:14px;bottom:12px;font-size:11px;color:var(--ink3);
+  display:flex;align-items:center;gap:6px;
+}
+.status .led{width:7px;height:7px;border-radius:50%;background:var(--green);}
+.status.err .led{background:#f85149;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>贡献者墙 <span class="dot">·</span> 开源软件社</h1>
+  <div class="sub">社团嘉年华 · 每一位改过一行代码、留过一句话的人</div>
+  <div class="counter">
+    <span class="n" id="count">–</span>
+    <span class="t">位同学已经参与进来</span>
+  </div>
+</header>
+
+<div class="sec-title">代码贡献者</div>
+<div class="grid" id="people">
+  <div class="empty">正在加载…</div>
+</div>
+
+<div class="sec-title" id="msgTitle" style="display:none">留言墙</div>
+<div class="msgs" id="msgs"></div>
+
+<footer>
+  本项目基于 <a href="https://github.com/Hextris/hextris" target="_blank" rel="noopener">Hextris</a>
+  二次开发，遵循 GPL-3.0-or-later 许可协议<br>
+  页面每 30 秒自动刷新 · <span id="updated">–</span>
+</footer>
+
+<div class="status" id="status"><span class="led"></span><span id="statusText">连接中</span></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var known = null;          // 上一次的贡献者集合，用来识别「新上墙的人」
+  var timer = null;
+
+  function el(id) { return document.getElementById(id); }
+
+  function setStatus(ok, text) {
+    el("status").className = "status" + (ok ? "" : " err");
+    el("statusText").textContent = text;
+  }
+
+  function fmtTime(iso) {
+    if (!iso) return "尚未生成名单";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    var p = function (n) { return n < 10 ? "0" + n : "" + n; };
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate())
+         + " " + p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+  }
+
+  function renderPerson(p, isNew) {
+    var a = document.createElement("a");
+    a.className = "person" + (isNew ? " new" : "");
+    a.href = p.url || "#";
+    a.target = "_blank";
+    a.rel = "noopener";
+
+    var img = document.createElement("img");
+    img.src = p.avatar || "";
+    img.alt = p.login || "";
+    img.loading = "lazy";
+    img.onerror = function () { this.style.visibility = "hidden"; };
+    a.appendChild(img);
+
+    var n = document.createElement("div");
+    n.className = "name";
+    n.textContent = p.login || "匿名";
+    a.appendChild(n);
+
+    var c = document.createElement("div");
+    c.className = "cnt";
+    c.textContent = (p.contributions || 0) + " 次贡献";
+    a.appendChild(c);
+
+    if (isNew) {
+      var b = document.createElement("div");
+      b.className = "badge-new";
+      b.textContent = "刚刚上墙";
+      a.appendChild(b);
+    }
+    return a;
+  }
+
+  function renderMessages(list) {
+    var box = el("msgs");
+    box.innerHTML = "";
+    if (!list || !list.length) {
+      el("msgTitle").style.display = "none";
+      return;
+    }
+    el("msgTitle").style.display = "flex";
+    list.forEach(function (m) {
+      var d = document.createElement("div");
+      d.className = "msg";
+
+      var img = document.createElement("img");
+      img.src = m.avatar || "";
+      img.alt = "";
+      img.loading = "lazy";
+      img.onerror = function () { this.style.visibility = "hidden"; };
+      d.appendChild(img);
+
+      var wrap = document.createElement("div");
+
+      var t = document.createElement("div");
+      t.className = "txt";
+      t.textContent = m.message || "";
+      wrap.appendChild(t);
+
+      var w = document.createElement("div");
+      w.className = "who";
+      w.textContent = "—— " + (m.name || m.login || "匿名同学");
+      wrap.appendChild(w);
+
+      d.appendChild(wrap);
+      box.appendChild(d);
+    });
+  }
+
+  function render(data) {
+    var people = (data && data.contributors) || [];
+    var msgs = (data && data.messages) || [];
+
+    el("count").textContent = people.length;
+    el("updated").textContent = "名单更新时间：" + fmtTime(data && data.updated_at);
+
+    var box = el("people");
+    box.innerHTML = "";
+
+    if (!people.length) {
+      var e = document.createElement("div");
+      e.className = "empty";
+      e.innerHTML = "还没有人上墙。<br>扫码玩一局，然后来改一行代码试试？";
+      box.appendChild(e);
+    } else {
+      var current = {};
+      people.forEach(function (p) { current[p.login] = true; });
+
+      people.forEach(function (p) {
+        var isNew = known !== null && !known[p.login];
+        box.appendChild(renderPerson(p, isNew));
+      });
+      known = current;
+    }
+
+    renderMessages(msgs);
+  }
+
+  function load() {
+    var url = "contributors.json?t=" + Date.now();
+    fetch(url, { cache: "no-store" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function (d) {
+        render(d);
+        setStatus(true, "已连接 · 每 30 秒刷新");
+      })
+      .catch(function (err) {
+        setStatus(false, "读取失败：" + err.message);
+      });
+  }
+
+  load();
+  timer = setInterval(load, 30000);
+})();
+</script>
+</body>
+</html>

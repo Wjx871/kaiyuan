@@ -1,0 +1,135 @@
+name: 更新贡献者名单
+
+# 每当 main 分支有新提交，就重新生成 contributors.json，供贡献者墙页面读取。
+#
+# 数据来源有两个：
+#   1. 仓库贡献者（提过 PR 的人）
+#   2. 标题以 [上墙] 开头的 Issue（不会写代码但留了话的人）
+#
+# 用仓库自带的 GITHUB_TOKEN，不占匿名 API 额度，人多也不会被限流。
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "contributors.json"   # 防止自己触发的提交再触发自己
+  issues:
+    types: [opened, edited, closed, reopened, labeled, unlabeled]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: read
+
+concurrency:
+  group: contributors
+  cancel-in-progress: true
+
+jobs:
+  update:
+    name: 生成 contributors.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 拉取贡献者与留言
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          API="https://api.github.com/repos/${{ github.repository }}"
+          H1="Authorization: Bearer $GH_TOKEN"
+          H2="Accept: application/vnd.github+json"
+
+          curl -sS --fail -H "$H1" -H "$H2" "$API/contributors?per_page=100" -o /tmp/contributors.json || echo "[]" > /tmp/contributors.json
+          curl -sS --fail -H "$H1" -H "$H2" "$API/issues?state=open&labels=%E4%B8%8A%E5%A2%99&per_page=100" -o /tmp/issues.json || echo "[]" > /tmp/issues.json
+
+          python3 - <<'PY'
+          import json, re, datetime
+
+          def load(p):
+              try:
+                  d = json.load(open(p, encoding="utf-8"))
+                  return d if isinstance(d, list) else []
+              except Exception:
+                  return []
+
+          # ---- 1. 代码贡献者 ----
+          people = []
+          for u in load("/tmp/contributors.json"):
+              if not isinstance(u, dict):
+                  continue
+              if u.get("type") == "Bot" or str(u.get("login", "")).endswith("[bot]"):
+                  continue
+              people.append({
+                  "login":         u.get("login"),
+                  "avatar":        u.get("avatar_url"),
+                  "url":           u.get("html_url"),
+                  "contributions": u.get("contributions", 0),
+              })
+          people.sort(key=lambda p: (-p["contributions"], (p["login"] or "").lower()))
+
+          # ---- 2. Issue 留言 ----
+          def pick_name(body):
+              """从 Issue 表单正文里取出「你希望显示的名字」那一段"""
+              if not body:
+                  return ""
+              for block in re.split(r"^###\s+", body, flags=re.M)[1:]:
+                  lines = block.splitlines()
+                  if not lines:
+                      continue
+                  header = lines[0].strip()
+                  if "希望显示的名字" not in header and "显示的名字" not in header:
+                      continue
+                  for ln in lines[1:]:
+                      t = ln.strip()
+                      if not t or t.startswith("###") or t.startswith("_No response_"):
+                          continue
+                      return t
+              return ""
+
+          messages = []
+          for it in load("/tmp/issues.json"):
+              if not isinstance(it, dict) or "pull_request" in it:
+                  continue          # issues 接口会把 PR 也带出来，过滤掉
+              title = (it.get("title") or "").strip()
+              title = re.sub(r"^\[上墙\]\s*", "", title).strip()
+              if not title:
+                  continue
+              user = it.get("user") or {}
+              body = it.get("body") or ""
+              messages.append({
+                  "message": title,
+                  "name":    pick_name(body) or user.get("login") or "匿名同学",
+                  "login":   user.get("login"),
+                  "avatar":  user.get("avatar_url"),
+                  "url":     it.get("html_url"),
+              })
+          messages.sort(key=lambda m: (m.get("login") or "").lower())
+
+          out = {
+              "updated_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "count": len(people),
+              "contributors": people,
+              "message_count": len(messages),
+              "messages": messages,
+          }
+
+          with open("contributors.json", "w", encoding="utf-8") as f:
+              json.dump(out, f, ensure_ascii=False, indent=2)
+              f.write("\n")
+
+          print(f"代码贡献者 {len(people)} 位，留言 {len(messages)} 条")
+          PY
+
+      - name: 提交变更
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add contributors.json
+          if git diff --staged --quiet; then
+            echo "名单没有变化，跳过提交"
+          else
+            git commit -m "chore: 更新贡献者名单 [skip ci]"
+            git push
+            echo "已提交"
+          fi

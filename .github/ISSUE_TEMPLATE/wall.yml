@@ -1,0 +1,35 @@
+name: 一句话上墙
+description: 不用写代码，留一句话给社团，会出现在贡献者墙上
+title: "[上墙] "
+labels: ["上墙"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 不会写代码也能参与
+
+        把你想说的话，**写在标题里**（把 `[上墙] ` 后面补完就行）。
+
+        比如：`[上墙] 祝开源软件社越办越好`
+
+        提交后，这句话会出现在活动现场大屏的贡献者墙上。
+
+        > 提 Issue 是开源社区最常见的参与方式之一。你正在做的事情，
+        > 和给一个大项目报告 bug、提改进建议，是同一件事。
+
+  - type: input
+    id: display_name
+    attributes:
+      label: 你希望显示的名字（可选）
+      description: 留空的话就显示你的 GitHub 用户名
+      placeholder: 张三
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: agree
+    attributes:
+      label: 确认
+      options:
+        - label: 这句话可以公开展示在活动现场和网页上
+          required: true

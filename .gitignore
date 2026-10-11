@@ -1,0 +1,12 @@
+# 编辑器与系统
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*~
+*.swp
+*.swo
+
+# 本地工具产生的临时文件
+__pycache__/
+*.pyc
