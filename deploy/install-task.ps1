@@ -78,7 +78,16 @@ Step "1/5  Copying sync scripts"
 $null = New-Item -ItemType Directory -Path $WorkDir -Force
 foreach ($pair in @(@($SrcPs1, $DstPs1), @($SrcCmd, $DstCmd))) {
     if (-not (Test-Path $pair[0])) { Bad ("missing source file: " + $pair[0]); exit 1 }
-    Copy-Item -Path $pair[0] -Destination $pair[1] -Force
+    $src = (Resolve-Path $pair[0]).Path
+    # When install-task.ps1 is run from the work dir itself, source and
+    # destination are the same file and Copy-Item refuses to overwrite itself.
+    if (Test-Path $pair[1]) {
+        if ($src -eq (Resolve-Path $pair[1]).Path) {
+            Ok ("= " + $pair[1] + " (already in place)")
+            continue
+        }
+    }
+    Copy-Item -Path $src -Destination $pair[1] -Force
     Ok ("-> " + $pair[1])
 }
 
