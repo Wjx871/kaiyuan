@@ -11,7 +11,7 @@
 
 	var FALLBACK = {
 		slogan: "开源软件社 · 社团嘉年华",
-		subtitle: "扫码即玩 · 30 秒冲榜",
+		subtitle: "扫码即玩 · 破纪录有奖励",
 		accent: "#4099ff"
 	};
 
@@ -24,6 +24,13 @@
 		try {
 			var css = document.createElement("style");
 			css.textContent = [
+				"#gameoverscreen{display:none}",
+				/* 原版会按已移除的分享区域计算偏移，固定结算区域以免遮住新入口。 */
+				"#gameoverscreen #container{top:calc(50% - 85px);margin-top:0 !important}",
+				"#carnivalPrLink:hover{background:#116329 !important}",
+				"#carnivalPrLink:focus-visible{outline:3px solid #0969da;outline-offset:3px}",
+				"#gameoverscreen #restart{position:fixed;left:50%;bottom:40px;margin-bottom:0}",
+				"@media(orientation:landscape) and (max-height:480px){#gameoverscreen #container{top:50%}#carnivalPrLink{top:16px;bottom:auto !important;left:auto !important;right:16px;width:160px !important;transform:none !important}#gameoverscreen #restart{left:48px;bottom:36px}}",
 				"#socialShare{display:none !important}",
 				".rrssb-buttons{display:none !important}",
 				"#badges{display:none !important}"
@@ -49,32 +56,44 @@
 	}
 
 	/*
-	 * 结算页加一个通往贡献者墙的入口。
+	 * 结算页加一个通往模拟 PR 体验的入口。
 	 * 放在原分享按钮腾出来的位置，且只在结算页出现——
 	 * 游玩过程中不插任何可点击元素，避免挡住旋转六边形的触控区域。
 	 */
-	function addWallLink() {
+	function addContributionLink() {
 		try {
 			var box = document.getElementById("bottomContainer");
-			if (!box || document.getElementById("carnivalWallLink")) {
+			if (!box || document.getElementById("carnivalPrLink")) {
 				return;
 			}
 			var a = document.createElement("a");
-			a.id = "carnivalWallLink";
-			a.href = "wall.html";
-			a.textContent = "看看谁上墙了 →";
+			a.id = "carnivalPrLink";
+			a.href = "pr.html";
+			a.textContent = "提个点子，体验 PR →";
 			a.style.cssText = [
-				"display:inline-block",
-				"margin-top:12px",
-				"padding:7px 18px",
-				"border-radius:20px",
-				"background:rgba(88,166,255,.14)",
-				"border:1px solid rgba(88,166,255,.45)",
-				"color:#79c0ff",
-				"font-size:12px",
+				"position:fixed",
+				"left:50%",
+				"bottom:110px",
+				"transform:translateX(-50%)",
+				"width:280px",
+				"max-width:calc(100vw - 32px)",
+				"box-sizing:border-box",
+				"display:block",
+				"padding:14px 18px",
+				"border-radius:8px",
+				"background:#1a7f37",
+				"color:#fff",
+				"font-family:system-ui,-apple-system,'PingFang SC',sans-serif",
+				"font-size:15px",
+				"font-weight:600",
+				"text-align:center",
 				"text-decoration:none",
-				"letter-spacing:.02em"
+				"line-height:1.4"
 			].join(";");
+			/* 不让入口触发游戏本体在 body 上的旋转事件。 */
+			function stopGameInput(e) { e.stopPropagation(); }
+			a.addEventListener("touchstart", stopGameInput);
+			a.addEventListener("mousedown", stopGameInput);
 			box.appendChild(a);
 		} catch (e) {
 			/* 忽略 */
@@ -132,7 +151,7 @@
 
 	function load() {
 		hideDeadLinks();
-		addWallLink();
+		addContributionLink();
 		if (!window.fetch) {
 			render(FALLBACK);
 			return;

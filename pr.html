@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>提个点子 · 模拟 PR · 开源软件社</title>
+<link rel="icon" href="favicon.ico">
+<style>
+:root{
+  --bg:#fff; --panel:#f6f8fa; --line:#d1d9e0;
+  --ink:#1f2328; --muted:#59636e; --blue:#0969da;
+  --green:#1a7f37; --green-hover:#116329; --error:#b42318;
+}
+*{box-sizing:border-box;}
+[hidden]{display:none !important;}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+              "Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:16px;line-height:1.6;
+}
+a{color:var(--blue);text-decoration:none;}
+a:hover{text-decoration:underline;}
+button,textarea{font:inherit;}
+button,a,textarea{-webkit-tap-highlight-color:transparent;}
+:focus-visible{outline:3px solid var(--blue);outline-offset:3px;}
+.topbar{background:var(--panel);border-bottom:1px solid var(--line);}
+.topbar-inner{
+  max-width:760px;margin:0 auto;padding:16px 24px;
+  display:flex;justify-content:space-between;align-items:center;gap:16px;
+}
+.club{font-size:15px;font-weight:600;}
+.back{font-size:14px;min-height:44px;display:inline-flex;align-items:center;white-space:nowrap;}
+main{max-width:760px;margin:0 auto;padding:28px 24px 40px;}
+.repo{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:16px;}
+.repo-name{color:var(--blue);overflow-wrap:anywhere;}
+.repo-name strong{font-weight:600;}
+.badge{
+  display:inline-block;border:1px solid var(--line);border-radius:20px;
+  padding:1px 9px;font-size:12px;color:var(--muted);white-space:nowrap;
+}
+.tab{margin-top:20px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;font-weight:600;}
+.tab span{display:inline-flex;align-items:center;gap:8px;}
+.pr-icon{width:18px;height:18px;flex:none;fill:currentColor;}
+.intro{margin:28px 0 24px;}
+h1{font-size:26px;line-height:1.35;letter-spacing:-.02em;margin:0 0 10px;text-wrap:balance;}
+p{margin:0;}
+.description{color:var(--muted);font-size:15px;max-width:60ch;}
+.steps{display:flex;gap:22px;list-style:none;margin:22px 0 0;padding:0;font-size:13px;color:var(--muted);}
+.steps li{display:flex;align-items:center;gap:7px;}
+.step-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border:1px solid var(--line);border-radius:50%;font-size:12px;
+}
+.active{color:var(--ink);font-weight:600;}
+.active .step-num{background:var(--ink);border-color:var(--ink);color:#fff;}
+.editor{border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+.editor-head{background:var(--panel);border-bottom:1px solid var(--line);padding:12px 16px;font-size:14px;font-weight:600;}
+.editor-body{padding:18px 16px 16px;}
+label{display:block;margin-bottom:8px;font-weight:600;font-size:15px;}
+textarea{
+  display:block;width:100%;min-height:156px;resize:vertical;
+  padding:12px;border:1px solid var(--line);border-radius:6px;
+  background:var(--bg);color:var(--ink);line-height:1.6;
+}
+textarea::placeholder{color:var(--muted);opacity:1;}
+textarea[aria-invalid="true"]{border-color:var(--error);}
+.field-meta{display:flex;justify-content:space-between;gap:12px;margin-top:8px;color:var(--muted);font-size:12px;}
+.error{margin-top:8px;color:var(--error);font-size:14px;}
+.actions{margin-top:18px;display:flex;flex-direction:column;align-items:flex-start;gap:10px;}
+.button{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:46px;padding:10px 18px;border:1px solid rgba(31,35,40,.15);
+  border-radius:6px;background:var(--green);color:#fff;font-size:15px;font-weight:600;
+  cursor:pointer;text-align:center;text-decoration:none;transition:background .15s ease-out;
+}
+.button:hover{background:var(--green-hover);text-decoration:none;}
+.button:active{background:#0d5423;}
+.button:disabled{opacity:.65;cursor:default;}
+.secondary{background:var(--panel);color:var(--ink);border-color:var(--line);}
+.secondary:hover{background:#eaeef2;}
+.note{color:var(--muted);font-size:12px;}
+.success{margin-top:28px;}
+.success-status{display:inline-flex;align-items:center;gap:7px;color:var(--green);font-weight:600;font-size:14px;margin-bottom:16px;}
+.success h1:focus{outline:none;}
+.submitted{margin:22px 0;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+.submitted-head{background:var(--panel);padding:10px 16px;border-bottom:1px solid var(--line);font-size:13px;font-weight:600;}
+.idea-preview{padding:16px;white-space:pre-wrap;overflow-wrap:anywhere;}
+.next{font-size:14px;color:var(--muted);}
+.success-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;}
+footer{margin-top:30px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;}
+@media(max-width:480px){
+  .topbar-inner{padding:10px 16px;gap:8px;}
+  main{padding:22px 16px 32px;}
+  h1{font-size:24px;}
+  .intro{margin-top:24px;}
+  .steps{gap:18px;}
+  .actions .button{width:100%;}
+  .success-actions{flex-direction:column;}
+}
+@media(prefers-reduced-motion:reduce){.button{transition:none;}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <span class="club">开源软件社 · 共创体验</span>
+    <a class="back" href="index.html">← 返回游戏</a>
+  </div>
+</header>
+<main>
+  <div class="repo">
+    <span class="repo-name">Wjx871 / <strong>kaiyuan</strong></span>
+    <span class="badge">模拟体验</span>
+  </div>
+  <div class="tab">
+    <span><svg class="pr-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.25a2.25 2.25 0 1 0-3 2.122v5.256a2.25 2.25 0 1 0 1.5 0V5.372A2.25 2.25 0 0 0 5 3.25ZM2.75 2.5a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5Zm0 9.5a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5Zm6.03-9.78a.75.75 0 0 1 1.06 1.06l-.72.72h2.13A2.75 2.75 0 0 1 14 6.75v3.878a2.25 2.25 0 1 1-1.5 0V6.75c0-.69-.56-1.25-1.25-1.25H9.12l.72.72a.75.75 0 1 1-1.06 1.06l-2-2a.75.75 0 0 1 0-1.06l2-2ZM13.25 12a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z"/></svg>Pull requests · 改进提议</span>
+  </div>
+
+  <section id="compose" aria-labelledby="composeTitle">
+    <div class="intro">
+      <h1 id="composeTitle">给这个游戏提个点子</h1>
+      <p class="description">你想改一句标语、增加一种玩法，还是让操作更顺手？写下来，体验一次提交 PR。</p>
+      <ol class="steps" aria-label="体验步骤">
+        <li class="active" aria-current="step"><span class="step-num">1</span>写个点子</li>
+        <li><span class="step-num">2</span>提交 PR</li>
+      </ol>
+    </div>
+    <noscript><p class="error">请启用浏览器 JavaScript 后体验模拟提交。</p><style>#ideaForm{display:none;}</style></noscript>
+    <form id="ideaForm" novalidate>
+      <div class="editor">
+        <div class="editor-head">新建 Pull Request</div>
+        <div class="editor-body">
+          <label for="idea">你的改进点子</label>
+          <textarea id="idea" name="idea" rows="5" maxlength="300" required
+            aria-describedby="ideaHelp ideaCount ideaError"
+            placeholder="比如：我想加一个新手练习模式，让方块落得慢一点。"></textarea>
+          <div class="field-meta">
+            <span id="ideaHelp">一句话也可以，不需要写代码。</span>
+            <span id="ideaCount">0 / 300</span>
+          </div>
+          <p class="error" id="ideaError" role="alert" hidden></p>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="button" id="submitPr" type="submit">提交 PR（模拟）</button>
+        <p class="note">无需账号。内容仅在本次页面显示，不会发送到 GitHub 或服务器。</p>
+      </div>
+    </form>
+  </section>
+
+  <section class="success" id="success" aria-labelledby="successTitle" hidden>
+    <div class="success-status">✓ Pull Request · 模拟提交成功</div>
+    <h1 id="successTitle" tabindex="-1">你的点子，迈出了第一步。</h1>
+    <p class="description">你刚刚体验了提出改进建议的环节。PR 是 Pull Request 的简称，意思是向项目提出修改请求。</p>
+    <div class="submitted">
+      <div class="submitted-head">你提出的点子</div>
+      <p class="idea-preview" id="ideaPreview"></p>
+    </div>
+    <p class="next">真实项目中，通常先修改代码，再提交 PR，由维护者讨论、审核，最后决定是否合并。只有一个点子时，也可以先提 Issue（建议或问题）。</p>
+    <div class="success-actions">
+      <a class="button" href="index.html">返回游戏，再玩一局</a>
+      <button class="button secondary" id="writeAgain" type="button">再提一个点子</button>
+    </div>
+    <p class="note" style="margin-top:14px">这是模拟体验，没有创建真实 PR，也不会自动上墙。刷新页面后内容会清除。</p>
+  </section>
+
+  <footer>开源不止是使用。发现问题、分享想法，也是参与的起点。</footer>
+</main>
+<script>
+(function () {
+  "use strict";
+
+  var form = document.getElementById("ideaForm");
+  var idea = document.getElementById("idea");
+  var error = document.getElementById("ideaError");
+  var compose = document.getElementById("compose");
+  var success = document.getElementById("success");
+  var submitted = false;
+
+  idea.addEventListener("input", function () {
+    document.getElementById("ideaCount").textContent = idea.value.length + " / 300";
+    idea.removeAttribute("aria-invalid");
+    error.hidden = true;
+  });
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (submitted) return;
+    var text = idea.value.trim();
+    if (!text || text.length > 300) {
+      error.textContent = !text ? "先写一个点子，再提交 PR 吧。" : "点子请控制在 300 字以内。";
+      error.hidden = false;
+      idea.setAttribute("aria-invalid", "true");
+      idea.focus();
+      return;
+    }
+
+    /* 纯本地模拟；用 textContent 展示输入，避免把点子当作 HTML 执行。 */
+    submitted = true;
+    document.getElementById("submitPr").disabled = true;
+    document.getElementById("ideaPreview").textContent = text;
+    compose.hidden = true;
+    success.hidden = false;
+    document.getElementById("successTitle").focus();
+    window.scrollTo(0, 0);
+  });
+
+  document.getElementById("writeAgain").addEventListener("click", function () {
+    submitted = false;
+    form.reset();
+    document.getElementById("submitPr").disabled = false;
+    document.getElementById("ideaCount").textContent = "0 / 300";
+    document.getElementById("ideaPreview").textContent = "";
+    idea.removeAttribute("aria-invalid");
+    error.hidden = true;
+    success.hidden = true;
+    compose.hidden = false;
+    idea.focus();
+  });
+})();
+</script>
+</body>
+</html>
